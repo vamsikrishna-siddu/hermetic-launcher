@@ -40,7 +40,7 @@ This enables Bazel rules to create tiny, platform-agnostic entrypoints that work
 
 ## Features
 
-- **Cross-platform**: Linux (x86_64, aarch64), macOS (x86_64, aarch64), Windows (x86_64)
+- **Cross-platform**: Linux (x86_64, aarch64, s390x), macOS (x86_64, aarch64), Windows (x86_64)
 - **True cross-compilation**: Finalize launcher for **any target platform** from **any build platform**
   - Build on Linux → create Windows/macOS launcher
   - Build on macOS → create Linux/Windows launcher
@@ -140,12 +140,12 @@ This is crucial for Bazel: your **exec platform** (where the build runs) can cre
 
 | Platform | Architectures | Template Size | Notes |
 |----------|--------------|---------------|-------|
-| **Linux** | x86_64, aarch64 | 10-68KB | Fully static, no dependencies |
+| **Linux** | x86_64, aarch64, s390x | 10-68KB | Fully static, no dependencies |
 | **macOS** | x86_64, aarch64 | 13-49KB | Links with libSystem |
 | **Windows** | x86_64 | 22KB | Links with kernel32.dll, shell32.dll |
 
 **Finalizers** (the tool that patches templates):
-- Linux: x86_64, aarch64 (static musl binaries)
+- Linux: x86_64, aarch64, s390x
 - macOS: x86_64, aarch64
 - Windows: x86_64
 
@@ -259,6 +259,7 @@ finalize-stub --template template --export-runfiles-env=false --output stub -- t
 cd runfiles-stub
 cargo build --release --target x86_64-unknown-linux-gnu
 cargo build --release --target aarch64-unknown-linux-gnu
+cargo build --release --target s390x-unknown-linux-gnu
 
 # macOS templates
 cargo build --release --target x86_64-apple-darwin
@@ -271,6 +272,7 @@ cargo build --release --target x86_64-pc-windows-gnu
 cd ../finalize-stub
 cargo build --release --target x86_64-unknown-linux-musl
 cargo build --release --target aarch64-unknown-linux-musl
+cargo build --release --target s390x-unknown-linux-gnu
 cargo build --release --target x86_64-apple-darwin
 cargo build --release --target aarch64-apple-darwin
 cargo build --release --target x86_64-pc-windows-gnu
@@ -326,6 +328,7 @@ Sizes vary by platform due to different linking requirements:
 
 - **x86_64 Linux**: ~10KB (fully static, no libc)
 - **aarch64 Linux**: ~67KB (static, larger due to alignment and number of instructions)
+- **s390x Linux**: fully static, no libc (IBM Z / z/Architecture)
 - **x86_64 macOS**: ~13KB (links libSystem)
 - **aarch64 macOS**: ~49KB (links libSystem, ARM64)
 - **x86_64 Windows**: ~22KB (links kernel32.dll)
