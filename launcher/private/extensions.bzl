@@ -13,6 +13,11 @@ _download_attrs = {
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/finalize-stub-aarch64-macos",
         "sha256": "435d35ffaf0b096604102d8c098ae8a54aa60acabb3f02a704158355fee2b8ec",
     },
+    "finalize-stub-s390x-linux": {
+        "name": "finalize_stub_s390x_linux",
+        "url": "https://github.com/vamsikrishna-siddu/hermetic-launcher/releases/download/binaries-20260427/finalize-stub-s390x-linux",
+        "sha256": "0c298fae73c5f39e88eaa9bceeb1d083518d67bb82ef4bb6f66499028d7c4214",
+    },
     "finalize-stub-x86_64-linux": {
         "name": "finalize_stub_x86_64_linux",
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/finalize-stub-x86_64-linux",
@@ -37,6 +42,11 @@ _download_attrs = {
         "name": "runfiles_stub_aarch64_macos",
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/runfiles-stub-aarch64-macos",
         "sha256": "752f8c0580a9624527b8878bc82abd785d2600de4ab7aa7b8452c3a901c58b1d",
+    },
+    "runfiles-stub-s390x-linux": {
+        "name": "runfiles_stub_s390x_linux",
+        "url": "https://github.com/vamsikrishna-siddu/hermetic-launcher/releases/download/binaries-20260427/runfiles-stub-s390x-linux",
+        "sha256": "bcd34e305c4cef19ac39019ea79e4647a71fb480de7996a518d7d0633b8d2318",
     },
     "runfiles-stub-x86_64-linux": {
         "name": "runfiles_stub_x86_64_linux",

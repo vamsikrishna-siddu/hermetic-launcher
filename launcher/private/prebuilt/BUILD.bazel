@@ -54,6 +54,31 @@ toolchain(
 )
 
 stub_template_toolchain(
+    name = "template_s390x_linux",
+    template_exe = "@runfiles_stub_s390x_linux//file",
+)
+
+toolchain(
+    name = "template_s390x_linux_toolchain",
+    target_compatible_with = [
+        "@platforms//cpu:s390x",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":template_s390x_linux",
+    toolchain_type = "//launcher:template_toolchain_type",
+)
+
+toolchain(
+    name = "template_s390x_linux_exec_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:s390x",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":template_s390x_linux",
+    toolchain_type = "//launcher:template_exec_toolchain_type",
+)
+
+stub_template_toolchain(
     name = "template_x86_64_linux",
     template_exe = "@runfiles_stub_x86_64_linux//file",
 )
@@ -155,6 +180,21 @@ toolchain(
         "@platforms//os:macos",
     ],
     toolchain = ":finalizer_aarch64_macos",
+    toolchain_type = "//launcher:finalizer_toolchain_type",
+)
+
+stub_finalizer_toolchain(
+    name = "finalizer_s390x_linux",
+    finalizer = "@finalize_stub_s390x_linux//file",
+)
+
+toolchain(
+    name = "finalizer_s390x_linux_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:s390x",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":finalizer_s390x_linux",
     toolchain_type = "//launcher:finalizer_toolchain_type",
 )
 

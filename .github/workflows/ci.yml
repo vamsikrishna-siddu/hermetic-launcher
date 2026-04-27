@@ -18,12 +18,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu,x86_64-unknown-linux-musl,aarch64-unknown-linux-musl,x86_64-pc-windows-gnu
+          targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu,s390x-unknown-linux-gnu,x86_64-unknown-linux-musl,aarch64-unknown-linux-musl,x86_64-pc-windows-gnu
 
       - name: Install cross-compilation dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools mingw-w64
+          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-s390x-linux-gnu musl-tools mingw-w64
           # Create a wrapper for aarch64-linux-gnu-gcc to use as linker
           echo '#!/bin/bash' | sudo tee /usr/local/bin/aarch64-linux-gnu-gcc-wrapper > /dev/null
           echo 'exec aarch64-linux-gnu-gcc "$@"' | sudo tee -a /usr/local/bin/aarch64-linux-gnu-gcc-wrapper > /dev/null
@@ -38,6 +38,9 @@ jobs:
 
           [target.aarch64-unknown-linux-musl]
           linker = "aarch64-linux-gnu-gcc"
+
+          [target.s390x-unknown-linux-gnu]
+          linker = "s390x-linux-gnu-gcc"
 
           [target.x86_64-pc-windows-gnu]
           linker = "x86_64-w64-mingw32-gcc"
@@ -56,6 +59,13 @@ jobs:
           cargo build --release --target aarch64-unknown-linux-gnu
           mkdir -p ../artifacts
           cp target/aarch64-unknown-linux-gnu/release/runfiles-stub ../artifacts/runfiles-stub-aarch64-linux
+
+      - name: Build template - s390x Linux
+        working-directory: runfiles-stub
+        run: |
+          cargo build --release --target s390x-unknown-linux-gnu
+          mkdir -p ../artifacts
+          cp target/s390x-unknown-linux-gnu/release/runfiles-stub ../artifacts/runfiles-stub-s390x-linux
 
       - name: Build template - x86_64 Windows
         working-directory: runfiles-stub
@@ -80,6 +90,17 @@ jobs:
         run: |
           cargo build --release --target aarch64-unknown-linux-musl
           cp target/aarch64-unknown-linux-musl/release/finalize-stub ../artifacts/finalize-stub-aarch64-linux
+
+      - name: Build finalizer - s390x Linux (gnu)
+        working-directory: finalize-stub
+        run: |
+          mkdir -p .cargo
+          cat >> .cargo/config.toml << 'EOF'
+          [target.s390x-unknown-linux-gnu]
+          linker = "s390x-linux-gnu-gcc"
+          EOF
+          cargo build --release --target s390x-unknown-linux-gnu
+          cp target/s390x-unknown-linux-gnu/release/finalize-stub ../artifacts/finalize-stub-s390x-linux
 
       - name: Build finalizer - x86_64 Windows
         working-directory: finalize-stub
@@ -194,6 +215,7 @@ jobs:
           chmod +x binaries/finalize-stub-x86_64-linux
           chmod +x binaries/runfiles-stub-x86_64-linux
           chmod +x binaries/runfiles-stub-aarch64-linux
+          chmod +x binaries/runfiles-stub-s390x-linux
 
       - name: Test finalizer on x86_64 template
         run: |
@@ -218,6 +240,18 @@ jobs:
             /bin/echo "Hello from aarch64"
           sha256sum test-stub-aarch64
           echo "SHA256 (aarch64 stub): $(sha256sum test-stub-aarch64 | cut -d' ' -f1)"
+
+      - name: Test finalizer on s390x template
+        run: |
+          echo "Testing finalizer with s390x template..."
+          ./binaries/finalize-stub-x86_64-linux \
+            --template binaries/runfiles-stub-s390x-linux \
+            --transform 0 \
+            --output test-stub-s390x \
+            -- \
+            /bin/echo "Hello from s390x"
+          sha256sum test-stub-s390x
+          echo "SHA256 (s390x stub): $(sha256sum test-stub-s390x | cut -d' ' -f1)"
 
       - name: Run x86_64 template (native)
         run: |
@@ -373,6 +407,15 @@ jobs:
             --transform 0 \
             --transform 1 \
             --output cross-platform-test/finalized-aarch64-linux \
+            -- \
+            /bin/echo "test arg"
+
+          echo "Finalizing Linux s390x template..."
+          ./binaries/finalize-stub-x86_64-linux \
+            --template binaries/runfiles-stub-s390x-linux \
+            --transform 0 \
+            --transform 1 \
+            --output cross-platform-test/finalized-s390x-linux \
             -- \
             /bin/echo "test arg"
 
@@ -678,6 +721,15 @@ jobs:
             /bin/echo "Hello from Linux aarch64"
           shasum -a 256 test-stub-linux-aarch64
 
+          echo "Testing finalizer with Linux s390x template..."
+          $FINALIZER \
+            --template binaries/runfiles-stub-s390x-linux \
+            --transform 0 \
+            --output test-stub-linux-s390x \
+            -- \
+            /bin/echo "Hello from Linux s390x"
+          shasum -a 256 test-stub-linux-s390x
+
       - name: Cross-platform finalization test - finalize all templates
         run: |
           if [ "${{ steps.arch.outputs.arch }}" = "arm64" ]; then
@@ -708,6 +760,15 @@ jobs:
             --transform 0 \
             --transform 1 \
             --output cross-platform-test/finalized-aarch64-linux \
+            -- \
+            /bin/echo "test arg"
+
+          echo "Finalizing Linux s390x template..."
+          $FINALIZER \
+            --template binaries/runfiles-stub-s390x-linux \
+            --transform 0 \
+            --transform 1 \
+            --output cross-platform-test/finalized-s390x-linux \
             -- \
             /bin/echo "test arg"
 
@@ -910,6 +971,15 @@ jobs:
             --transform 0 \
             --transform 1 \
             --output cross-platform-test/finalized-aarch64-linux \
+            -- \
+            /bin/echo "test arg"
+
+          echo "Finalizing Linux s390x template..."
+          ./binaries/finalize-stub-x86_64-windows.exe \
+            --template binaries/runfiles-stub-s390x-linux \
+            --transform 0 \
+            --transform 1 \
+            --output cross-platform-test/finalized-s390x-linux \
             -- \
             /bin/echo "test arg"
 
