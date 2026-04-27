@@ -23,6 +23,11 @@ _download_attrs = {
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/finalize-stub-x86_64-macos",
         "sha256": "c2123321c05f9a16448acbd859375cbe18d4ff4bda4d6b2bfe73bedff2a8afc8",
     },
+    "finalize-stub-s390x-linux": {
+        "name": "finalize_stub_s390x_linux",
+        "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/finalize-stub-s390x-linux",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",  # TODO: update after first s390x release
+    },
     "finalize-stub-x86_64-windows.exe": {
         "name": "finalize_stub_x86_64_windows",
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/finalize-stub-x86_64-windows.exe",
@@ -37,6 +42,11 @@ _download_attrs = {
         "name": "runfiles_stub_aarch64_macos",
         "url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260323/runfiles-stub-aarch64-macos",
         "sha256": "752f8c0580a9624527b8878bc82abd785d2600de4ab7aa7b8452c3a901c58b1d",
+    },
+    "runfiles-stub-s390x-linux": {
+        "name": "runfiles_stub_s390x_linux",
+        "url": "file:///Users/vamsikrishnasiddu/rules-img-s390x/hermetic-launcher/runfiles-stub/target/s390x-unknown-linux-gnu/release/runfiles-stub",
+        "sha256": "84402bc8c25c944c1bb9f2fd087993df77199cf04265f624ee4c24db11762215",
     },
     "runfiles-stub-x86_64-linux": {
         "name": "runfiles_stub_x86_64_linux",

@@ -112,6 +112,17 @@ mod syscall_numbers {
     pub const AT_FDCWD: i32 = -100;  // Special fd for openat/faccessat to work like open/access
 }
 
+#[cfg(target_arch = "s390x")]
+mod syscall_numbers {
+    pub const SYS_EXIT: usize = 1;
+    pub const SYS_READ: usize = 3;
+    pub const SYS_WRITE: usize = 4;
+    pub const SYS_OPEN: usize = 5;
+    pub const SYS_CLOSE: usize = 6;
+    pub const SYS_EXECVE: usize = 11;
+    pub const SYS_ACCESS: usize = 33;
+}
+
 use syscall_numbers::*;
 
 const O_RDONLY: i32 = 0;
@@ -136,6 +147,18 @@ fn exit(code: i32) -> ! {
             "svc #0",
             in("x8") SYS_EXIT,
             in("x0") code,
+            options(noreturn)
+        );
+    }
+}
+
+#[cfg(target_arch = "s390x")]
+fn exit(code: i32) -> ! {
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_EXIT,
+            in("r2") code,
             options(noreturn)
         );
     }
@@ -170,6 +193,22 @@ fn write(fd: i32, buf: &[u8]) -> isize {
             in("x1") buf.as_ptr(),
             in("x2") buf.len(),
             lateout("x0") ret,
+        );
+    }
+    ret
+}
+
+#[cfg(target_arch = "s390x")]
+fn write(fd: i32, buf: &[u8]) -> isize {
+    let ret: isize;
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_WRITE,
+            in("r2") fd,
+            in("r3") buf.as_ptr(),
+            in("r4") buf.len(),
+            lateout("r2") ret,
         );
     }
     ret
@@ -210,6 +249,22 @@ fn open(path: &[u8]) -> i32 {
     ret
 }
 
+#[cfg(target_arch = "s390x")]
+fn open(path: &[u8]) -> i32 {
+    let ret: i64;
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_OPEN,
+            in("r2") path.as_ptr(),
+            in("r3") O_RDONLY,
+            in("r4") 0i64,
+            lateout("r2") ret,
+        );
+    }
+    ret as i32
+}
+
 #[cfg(target_arch = "x86_64")]
 fn read(fd: i32, buf: &mut [u8]) -> isize {
     let ret: isize;
@@ -244,6 +299,22 @@ fn read(fd: i32, buf: &mut [u8]) -> isize {
     ret
 }
 
+#[cfg(target_arch = "s390x")]
+fn read(fd: i32, buf: &mut [u8]) -> isize {
+    let ret: isize;
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_READ,
+            in("r2") fd,
+            in("r3") buf.as_ptr(),
+            in("r4") buf.len(),
+            lateout("r2") ret,
+        );
+    }
+    ret
+}
+
 #[cfg(target_arch = "x86_64")]
 fn close(fd: i32) {
     unsafe {
@@ -266,6 +337,18 @@ fn close(fd: i32) {
             in("x8") SYS_CLOSE,
             in("x0") fd,
             lateout("x0") _,
+        );
+    }
+}
+
+#[cfg(target_arch = "s390x")]
+fn close(fd: i32) {
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_CLOSE,
+            in("r2") fd,
+            lateout("r2") _,
         );
     }
 }
@@ -305,6 +388,21 @@ fn path_exists(path: &[u8]) -> bool {
     ret == 0
 }
 
+#[cfg(target_arch = "s390x")]
+fn path_exists(path: &[u8]) -> bool {
+    let ret: i64;
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_ACCESS,
+            in("r2") path.as_ptr(),
+            in("r3") 0i64,  // F_OK = 0 (check existence)
+            lateout("r2") ret,
+        );
+    }
+    ret == 0
+}
+
 #[cfg(target_arch = "x86_64")]
 fn execve(filename: *const u8, argv: *const *const u8, envp: *const *const u8) -> i32 {
     let ret: i32;
@@ -337,6 +435,22 @@ fn execve(filename: *const u8, argv: *const *const u8, envp: *const *const u8) -
         );
     }
     ret
+}
+
+#[cfg(target_arch = "s390x")]
+fn execve(filename: *const u8, argv: *const *const u8, envp: *const *const u8) -> i32 {
+    let ret: i64;
+    unsafe {
+        core::arch::asm!(
+            "svc 0",
+            in("r1") SYS_EXECVE,
+            in("r2") filename,
+            in("r3") argv,
+            in("r4") envp,
+            lateout("r2") ret,
+        );
+    }
+    ret as i32
 }
 
 // String utilities
@@ -885,6 +999,15 @@ core::arch::global_asm!(
     "_start:",
     "mov x0, sp",                   // Pass stack pointer as first argument
     "b _start_rust",                // Jump to the actual start function
+);
+
+#[cfg(target_arch = "s390x")]
+core::arch::global_asm!(
+    ".global _start",
+    "_start:",
+    "lgr %r2, %r15",               // Pass stack pointer as first argument
+    "aghi %r15, -160",             // Allocate mandatory register save area
+    "brasl %r14, _start_rust",     // Call the actual start function
 );
 
 #[no_mangle]
